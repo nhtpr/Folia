@@ -1059,10 +1059,10 @@ index fdb0bcdca1cd38f55f191d42e422c354af4452b5..24c8581b2fa9c3ef6f6aad64bd4454d6
  
      private boolean saveChunk(final ChunkAccess chunk, final boolean unloading, final Completable<CompoundTag>[] chunkSave) {
 diff --git a/io/papermc/paper/threadedregions/TickRegionScheduler.java b/io/papermc/paper/threadedregions/TickRegionScheduler.java
-index ffb6d2ef658bc658eaf7d26d9d20590fc94432e2..9772d0f7b003de2544210c5e11f7a8c8feaf0cdd 100644
+index 0b4f8f57ceaa5e175ac2b13476076e75c4b1383d..4eb564fb10a789422570062cbe77e58f66a2cb07 100644
 --- a/io/papermc/paper/threadedregions/TickRegionScheduler.java
 +++ b/io/papermc/paper/threadedregions/TickRegionScheduler.java
-@@ -135,8 +135,13 @@ public final class TickRegionScheduler {
+@@ -136,8 +136,13 @@ public final class TickRegionScheduler {
          tickThreadRunner.currentTickingRegion = region;
          if (region != null) {
              tickThreadRunner.currentTickingWorldRegionizedData = region.regioniser.world.worldRegionData.get();
@@ -1076,7 +1076,7 @@ index ffb6d2ef658bc658eaf7d26d9d20590fc94432e2..9772d0f7b003de2544210c5e11f7a8c8
          }
      }
  
-@@ -191,6 +196,17 @@ public final class TickRegionScheduler {
+@@ -192,6 +197,17 @@ public final class TickRegionScheduler {
          return tickThreadRunner.currentTickingTask;
      }
  
@@ -1094,7 +1094,7 @@ index ffb6d2ef658bc658eaf7d26d9d20590fc94432e2..9772d0f7b003de2544210c5e11f7a8c8
      /**
       * Schedules the given region
       * @throws IllegalStateException If the region is already scheduled or is ticking
-@@ -263,6 +279,9 @@ public final class TickRegionScheduler {
+@@ -264,6 +280,9 @@ public final class TickRegionScheduler {
          private ThreadedRegionizer.ThreadedRegion<TickRegions.TickRegionData, TickRegions.TickRegionSectionData> currentTickingRegion;
          private RegionizedWorldData currentTickingWorldRegionizedData;
          private SchedulableTick currentTickingTask;
@@ -1105,7 +1105,7 @@ index ffb6d2ef658bc658eaf7d26d9d20590fc94432e2..9772d0f7b003de2544210c5e11f7a8c8
          public TickThreadRunner(final ThreadGroup group, final Runnable run, final String name) {
              super(group, run, name);
 diff --git a/io/papermc/paper/threadedregions/TickRegions.java b/io/papermc/paper/threadedregions/TickRegions.java
-index 40d2883d86a43175b49260bd2cb17459cc329639..4cae0a644bc979c1efeb784adff0f49dab3c6bef 100644
+index 4139d6c7b2164c233d71b0d1289ae3f6717e44ff..1f6434809b07ffdbd467d95da9c193df5a068502 100644
 --- a/io/papermc/paper/threadedregions/TickRegions.java
 +++ b/io/papermc/paper/threadedregions/TickRegions.java
 @@ -103,6 +103,11 @@ public final class TickRegions implements ThreadedRegionizer.RegionCallbacks<Tic
@@ -1171,7 +1171,7 @@ index 40d2883d86a43175b49260bd2cb17459cc329639..4cae0a644bc979c1efeb784adff0f49d
 +         // Folia end - profiler
 +
          @Override
-         protected void tickRegion(final int tickCount, final long startTime, final long scheduledEnd) {
+         protected void tickRegion(final long tickCount, final long startTime, final long scheduledEnd) {
 +            final ca.spottedleaf.leafprofiler.RegionizedProfiler.Handle profiler = io.papermc.paper.threadedregions.TickRegionScheduler.getProfiler(); // Folia - profiler
 +            profiler.startTick(); try { // Folia - profiler
              MinecraftServer.getServer().tickServer(startTime, scheduledEnd, TimeUnit.MILLISECONDS.toMillis(10L), this.region);

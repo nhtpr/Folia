@@ -1573,7 +1573,7 @@ index 0000000000000000000000000000000000000000..8e25ab1c8ae026e51ce4d711c9084fdf
 \ No newline at end of file
 diff --git a/io/papermc/paper/threadedregions/RegionizedServer.java b/io/papermc/paper/threadedregions/RegionizedServer.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..b3bc39ebe8d2f48d976de9cd4fcae46095523514
+index 0000000000000000000000000000000000000000..bd8bc5ce1faa19c9195e1865e34432a806457b92
 --- /dev/null
 +++ b/io/papermc/paper/threadedregions/RegionizedServer.java
 @@ -0,0 +1,502 @@
@@ -1758,7 +1758,7 @@ index 0000000000000000000000000000000000000000..b3bc39ebe8d2f48d976de9cd4fcae460
 +        }
 +
 +        @Override
-+        protected void tickRegion(final int tickCount, final long startTime, final long scheduledEnd) {
++        protected void tickRegion(final long tickCount, final long startTime, final long scheduledEnd) {
 +            this.drainTasks();
 +            this.server.globalTick(tickCount);
 +        }
@@ -1903,7 +1903,7 @@ index 0000000000000000000000000000000000000000..b3bc39ebe8d2f48d976de9cd4fcae460
 +    }
 +     */
 +
-+    private void globalTick(final int tickCount) {
++    private void globalTick(final long tickCount) {
 +        /*
 +        if (false) {
 +            io.papermc.paper.threadedregions.ThreadedTicketLevelPropagator.main(null);
@@ -2011,7 +2011,7 @@ index 0000000000000000000000000000000000000000..b3bc39ebe8d2f48d976de9cd4fcae460
 +
 +    // A global tick only updates things like weather / worldborder, basically anything in the world that is
 +    // NOT tied to a specific region, but rather shared amongst all of them.
-+    private void globalTick(final ServerLevel world, final int tickCount) {
++    private void globalTick(final ServerLevel world, final long tickCount) {
 +        // needs
 +        // worldborder tick
 +        // advancing the weather cycle
@@ -2066,12 +2066,12 @@ index 0000000000000000000000000000000000000000..b3bc39ebe8d2f48d976de9cd4fcae460
 +        world.getWorldBorder().tick();
 +    }
 +
-+    private void tickTime(final ServerLevel world, final int tickCount) {
++    private void tickTime(final ServerLevel world, final long tickCount) {
 +        if (world.tickTime) {
 +            if (world.getGameRules().get(GameRules.ADVANCE_TIME)) {
-+                world.setDayTime(world.levelData.getDayTime() + (long)tickCount);
++                world.setDayTime(world.levelData.getDayTime() + tickCount);
 +            }
-+            world.serverLevelData.setGameTime(world.serverLevelData.getGameTime() + (long)tickCount);
++            world.serverLevelData.setGameTime(world.serverLevelData.getGameTime() + tickCount);
 +        }
 +    }
 +
@@ -3718,104 +3718,6 @@ index 0000000000000000000000000000000000000000..1f49d787ecee4ba9dce087036a4e3cbc
 +    }
 +}
 \ No newline at end of file
-diff --git a/io/papermc/paper/threadedregions/Schedule.java b/io/papermc/paper/threadedregions/Schedule.java
-new file mode 100644
-index 0000000000000000000000000000000000000000..820b1c4dc1b19ee8602333295f2034362f885a37
---- /dev/null
-+++ b/io/papermc/paper/threadedregions/Schedule.java
-@@ -0,0 +1,91 @@
-+package io.papermc.paper.threadedregions;
-+
-+/**
-+ * A Schedule is an object that can be used to maintain a periodic schedule for an event of interest.
-+ */
-+public final class Schedule {
-+
-+    private long lastPeriod;
-+
-+    /**
-+     * Initialises a schedule with the provided period.
-+     * @param firstPeriod The last time an event of interest occurred.
-+     * @see #setLastPeriod(long)
-+     */
-+    public Schedule(final long firstPeriod) {
-+        this.lastPeriod = firstPeriod;
-+    }
-+
-+    /**
-+     * Updates the last period to the specified value. This call sets the last "time" the event
-+     * of interest took place at. Thus, the value returned by {@link #getDeadline(long)} is
-+     * the provided time plus the period length provided to {@code getDeadline}.
-+     * @param value The value to set the last period to.
-+     */
-+    public void setLastPeriod(final long value) {
-+        this.lastPeriod = value;
-+    }
-+
-+    /**
-+     * Returns the last time the event of interest should have taken place.
-+     */
-+    public long getLastPeriod() {
-+        return this.lastPeriod;
-+    }
-+
-+    /**
-+     * Returns the number of times the event of interest should have taken place between the last
-+     * period and the provided time given the period between each event.
-+     * @param periodLength The length of the period between events in ns.
-+     * @param time The provided time.
-+     */
-+    public int getPeriodsAhead(final long periodLength, final long time) {
-+        final long difference = time - this.lastPeriod;
-+        final int ret = (int)(Math.abs(difference) / periodLength);
-+        return difference >= 0 ? ret : -ret;
-+    }
-+
-+    /**
-+     * Returns the next starting deadline for the event of interest to take place,
-+     * given the provided period length.
-+     * @param periodLength The provided period length.
-+     */
-+    public long getDeadline(final long periodLength) {
-+        return this.lastPeriod + periodLength;
-+    }
-+
-+    /**
-+     * Adjusts the last period so that the next starting deadline returned is the next period specified,
-+     * given the provided period length.
-+     * @param nextPeriod The specified next starting deadline.
-+     * @param periodLength The specified period length.
-+     */
-+    public void setNextPeriod(final long nextPeriod, final long periodLength) {
-+        this.lastPeriod = nextPeriod - periodLength;
-+    }
-+
-+    /**
-+     * Increases the last period by the specified number of periods and period length.
-+     * The specified number of periods may be < 0, in which case the last period
-+     * will decrease.
-+     * @param periods The specified number of periods.
-+     * @param periodLength The specified period length.
-+     */
-+    public void advanceBy(final int periods, final long periodLength) {
-+        this.lastPeriod += (long)periods * periodLength;
-+    }
-+
-+    /**
-+     * Sets the last period so that it is the specified number of periods ahead
-+     * given the specified time and period length.
-+     * @param periodsToBeAhead Specified number of periods to be ahead by.
-+     * @param periodLength The specified period length.
-+     * @param time The specified time.
-+     */
-+    public void setPeriodsAhead(final int periodsToBeAhead, final long periodLength, final long time) {
-+        final int periodsAhead = this.getPeriodsAhead(periodLength, time);
-+        final int periodsToAdd = periodsToBeAhead - periodsAhead;
-+
-+        this.lastPeriod -= (long)periodsToAdd * periodLength;
-+    }
-+}
-\ No newline at end of file
 diff --git a/io/papermc/paper/threadedregions/TeleportUtils.java b/io/papermc/paper/threadedregions/TeleportUtils.java
 new file mode 100644
 index 0000000000000000000000000000000000000000..2a64a5b2cf049661fe3f5a22ddfa39979624f5ec
@@ -5319,10 +5221,10 @@ index 0000000000000000000000000000000000000000..604385af903845d966382ad0a4168798
 \ No newline at end of file
 diff --git a/io/papermc/paper/threadedregions/TickRegionScheduler.java b/io/papermc/paper/threadedregions/TickRegionScheduler.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..ffb6d2ef658bc658eaf7d26d9d20590fc94432e2
+index 0000000000000000000000000000000000000000..0b4f8f57ceaa5e175ac2b13476076e75c4b1383d
 --- /dev/null
 +++ b/io/papermc/paper/threadedregions/TickRegionScheduler.java
-@@ -0,0 +1,561 @@
+@@ -0,0 +1,562 @@
 +package io.papermc.paper.threadedregions;
 +
 +import ca.spottedleaf.concurrentutil.numa.OSNuma;
@@ -5331,6 +5233,7 @@ index 0000000000000000000000000000000000000000..ffb6d2ef658bc658eaf7d26d9d20590f
 +import ca.spottedleaf.concurrentutil.scheduler.Scheduler;
 +import ca.spottedleaf.concurrentutil.scheduler.StealingScheduledThreadPool;
 +import ca.spottedleaf.concurrentutil.util.TimeUtil;
++import ca.spottedleaf.moonrise.common.time.Schedule;
 +import ca.spottedleaf.moonrise.common.time.TickData;
 +import ca.spottedleaf.moonrise.common.time.TickTime;
 +import ca.spottedleaf.moonrise.common.util.MoonriseConstants;
@@ -5651,7 +5554,7 @@ index 0000000000000000000000000000000000000000..ffb6d2ef658bc658eaf7d26d9d20590f
 +
 +        protected abstract boolean markNotTicking();
 +
-+        protected abstract void tickRegion(final int tickCount, final long startTime, final long scheduledEnd);
++        protected abstract void tickRegion(final long tickCount, final long startTime, final long scheduledEnd);
 +
 +        protected abstract void runRegionTasks(final BooleanSupplier canContinue);
 +
@@ -5726,7 +5629,7 @@ index 0000000000000000000000000000000000000000..ffb6d2ef658bc658eaf7d26d9d20590f
 +            final long tickStart = System.nanoTime();
 +
 +            // use max(), don't assume that tickStart >= scheduledStart
-+            final int tickCount = Math.max(1, this.tickSchedule.getPeriodsAhead(TIME_BETWEEN_TICKS, tickStart));
++            final long tickCount = Math.max(1L, this.tickSchedule.getPeriodsAhead(TIME_BETWEEN_TICKS, tickStart));
 +
 +            if (!this.tryMarkTicking()) {
 +                if (!this.cancelled.get()) {
@@ -5886,7 +5789,7 @@ index 0000000000000000000000000000000000000000..ffb6d2ef658bc658eaf7d26d9d20590f
 +}
 \ No newline at end of file
 diff --git a/io/papermc/paper/threadedregions/TickRegions.java b/io/papermc/paper/threadedregions/TickRegions.java
-index 8424cf9d4617b4732d44cc460d25b04481068989..40d2883d86a43175b49260bd2cb17459cc329639 100644
+index 8424cf9d4617b4732d44cc460d25b04481068989..4139d6c7b2164c233d71b0d1289ae3f6717e44ff 100644
 --- a/io/papermc/paper/threadedregions/TickRegions.java
 +++ b/io/papermc/paper/threadedregions/TickRegions.java
 @@ -1,10 +1,486 @@
@@ -6346,7 +6249,7 @@ index 8424cf9d4617b4732d44cc460d25b04481068989..40d2883d86a43175b49260bd2cb17459
 +        }
 +
 +        @Override
-+        protected void tickRegion(final int tickCount, final long startTime, final long scheduledEnd) {
++        protected void tickRegion(final long tickCount, final long startTime, final long scheduledEnd) {
 +            MinecraftServer.getServer().tickServer(startTime, scheduledEnd, TimeUnit.MILLISECONDS.toMillis(10L), this.region);
 +        }
 +

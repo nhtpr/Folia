@@ -10932,7 +10932,7 @@ index 878000d1b5ec5d7944fc4da9ff9936fe78d044fc..c5f4273fe2985248894f3c679265601c
                  list.add(player);
              }
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index dc65503a2d785d64d37b76b0303f51cf66d9769a..0ed0935cf963ecd34ea720d12939204fca99bb0d 100644
+index dc65503a2d785d64d37b76b0303f51cf66d9769a..0ae51d70e81d74392e7a41659adeadc5de0a8060 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
 @@ -190,11 +190,11 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
@@ -11803,23 +11803,44 @@ index dc65503a2d785d64d37b76b0303f51cf66d9769a..0ed0935cf963ecd34ea720d12939204f
      }
  
      public @Nullable BlockPos findNearestMapStructure(TagKey<Structure> structureTag, BlockPos pos, int radius, boolean skipKnownStructures) {
-@@ -2236,6 +2317,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -2236,24 +2317,22 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
          // Paper start - Call missing map initialize event and set id
          final DimensionDataStorage storage = this.getServer().overworld().getDataStorage();
  
-+        synchronized (storage.cache) { // Folia - region threading
-         final Optional<net.minecraft.world.level.saveddata.SavedData> cacheEntry = storage.cache.get(MapItemSavedData.type(mapId));
-         if (cacheEntry == null) { // Cache did not contain, try to load and may init
-             final MapItemSavedData mapData = storage.get(MapItemSavedData.type(mapId)); // get populates the cache
-@@ -2254,6 +2336,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+-        final Optional<net.minecraft.world.level.saveddata.SavedData> cacheEntry = storage.cache.get(MapItemSavedData.type(mapId));
+-        if (cacheEntry == null) { // Cache did not contain, try to load and may init
+-            final MapItemSavedData mapData = storage.get(MapItemSavedData.type(mapId)); // get populates the cache
+-            if (mapData != null) { // map was read, init it and return
+-                mapData.id = mapId;
+-                new org.bukkit.event.server.MapInitializeEvent(mapData.mapView).callEvent();
+-                return mapData;
++        // Folia start - region threading
++        MapItemSavedData ret = storage.read(MapItemSavedData.type(mapId), (MapItemSavedData fromDisk) -> {
++            if (fromDisk == null) {
++                return;
+             }
+ 
+-            return null; // Map does not exist, reading failed.
+-        }
+-        // Cache entry exists, update it with the id ref and return.
+-        if (cacheEntry.orElse(null) instanceof final MapItemSavedData mapItemSavedData) {
+-            mapItemSavedData.id = mapId;
+-            return mapItemSavedData;
++            fromDisk.id = mapId;
++            new org.bukkit.event.server.MapInitializeEvent(fromDisk.mapView).callEvent();
++        });
++
++        if (ret != null) {
++            ret.id = mapId;
          }
  
-         return null;
-+        } // Folia - region threading
+-        return null;
++        return ret;
++        // Folia end - region threading
          // Paper end - Call missing map initialize event and set id
      }
  
-@@ -2299,7 +2382,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -2299,7 +2378,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
      public boolean setChunkForced(int chunkX, int chunkZ, boolean add) {
          boolean flag = this.chunkSource.updateChunkForced(new ChunkPos(chunkX, chunkZ), add);
          if (add && flag) {
@@ -11828,7 +11849,7 @@ index dc65503a2d785d64d37b76b0303f51cf66d9769a..0ed0935cf963ecd34ea720d12939204f
          }
  
          return flag;
-@@ -2316,11 +2399,11 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -2316,11 +2395,11 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
          Optional<Holder<PoiType>> optional1 = PoiTypes.forState(newState);
          if (!Objects.equals(optional, optional1)) {
              BlockPos blockPos = pos.immutable();
@@ -11842,7 +11863,7 @@ index dc65503a2d785d64d37b76b0303f51cf66d9769a..0ed0935cf963ecd34ea720d12939204f
                  // Paper start - Remove stale POIs
                  if (optional.isEmpty() && this.getPoiManager().exists(blockPos, ignored -> true)) {
                      this.getPoiManager().remove(blockPos);
-@@ -2359,7 +2442,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -2359,7 +2438,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
      }
  
      public @Nullable Raid getRaidAt(BlockPos pos) {
@@ -11851,7 +11872,7 @@ index dc65503a2d785d64d37b76b0303f51cf66d9769a..0ed0935cf963ecd34ea720d12939204f
      }
  
      public boolean isRaided(BlockPos pos) {
-@@ -2383,7 +2466,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -2383,7 +2462,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
              }
  
              bufferedWriter.write(String.format(Locale.ROOT, "entities: %s\n", this.moonrise$getEntityLookup().getDebugInfo()));  // Paper - rewrite chunk system
@@ -11860,7 +11881,7 @@ index dc65503a2d785d64d37b76b0303f51cf66d9769a..0ed0935cf963ecd34ea720d12939204f
              bufferedWriter.write(String.format(Locale.ROOT, "block_ticks: %d\n", this.getBlockTicks().count()));
              bufferedWriter.write(String.format(Locale.ROOT, "fluid_ticks: %d\n", this.getFluidTicks().count()));
              bufferedWriter.write("distance_manager: " + chunkMap.getDistanceManager().getDebugStatus() + "\n");
-@@ -2453,7 +2536,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -2453,7 +2532,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
      private void dumpBlockEntityTickers(Writer output) throws IOException {
          CsvOutput csvOutput = CsvOutput.builder().addColumn("x").addColumn("y").addColumn("z").addColumn("type").build(output);
  
@@ -11869,7 +11890,7 @@ index dc65503a2d785d64d37b76b0303f51cf66d9769a..0ed0935cf963ecd34ea720d12939204f
              BlockPos pos = tickingBlockEntity.getPos();
              csvOutput.writeRow(pos.getX(), pos.getY(), pos.getZ(), tickingBlockEntity.getType());
          }
-@@ -2461,7 +2544,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -2461,7 +2540,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
  
      @VisibleForTesting
      public void clearBlockEvents(BoundingBox boundingBox) {
@@ -11878,7 +11899,7 @@ index dc65503a2d785d64d37b76b0303f51cf66d9769a..0ed0935cf963ecd34ea720d12939204f
      }
  
      @Override
-@@ -2504,8 +2587,8 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -2504,8 +2583,8 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
              this.players.size(),
              this.moonrise$getEntityLookup().getDebugInfo(), // Paper - rewrite chunk system
              getTypeCount(this.moonrise$getEntityLookup().getAll(), entity -> BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString()), // Paper - rewrite chunk system
@@ -11889,7 +11910,7 @@ index dc65503a2d785d64d37b76b0303f51cf66d9769a..0ed0935cf963ecd34ea720d12939204f
              this.getBlockTicks().count(),
              this.getFluidTicks().count(),
              this.gatherChunkSourceStats()
-@@ -2557,15 +2640,15 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -2557,15 +2636,15 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
      }
  
      public void startTickingChunk(LevelChunk chunk) {
@@ -11908,7 +11929,7 @@ index dc65503a2d785d64d37b76b0303f51cf66d9769a..0ed0935cf963ecd34ea720d12939204f
      }
  
      public void waitForEntities(ChunkPos chunkPos, int radius) {
-@@ -2720,7 +2803,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -2720,7 +2799,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
      // Paper start - optimize redstone (Alternate Current)
      @Override
      public alternate.current.wire.WireHandler getWireHandler() {
@@ -11917,7 +11938,7 @@ index dc65503a2d785d64d37b76b0303f51cf66d9769a..0ed0935cf963ecd34ea720d12939204f
      }
      // Paper end - optimize redstone (Alternate Current)
  
-@@ -2755,18 +2838,18 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -2755,18 +2834,18 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
                  ServerLevel.this.getWaypointManager().untrackWaypoint(waypointTransmitter);
              }
  
@@ -11939,7 +11960,7 @@ index dc65503a2d785d64d37b76b0303f51cf66d9769a..0ed0935cf963ecd34ea720d12939204f
              // Paper start - Reset pearls when they stop being ticked
              if (ServerLevel.this.paperConfig().fixes.disableUnloadedChunkEnderpearlExploit && ServerLevel.this.paperConfig().misc.legacyEnderPearlBehavior && entity instanceof net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl pearl) {
                  pearl.setOwner(null);
-@@ -2777,6 +2860,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -2777,6 +2856,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
          @Override
          public void onTrackingStart(Entity entity) {
              org.spigotmc.AsyncCatcher.catchOp("entity register"); // Spigot
@@ -11947,7 +11968,7 @@ index dc65503a2d785d64d37b76b0303f51cf66d9769a..0ed0935cf963ecd34ea720d12939204f
              // ServerLevel.this.getChunkSource().addEntity(entity); // Paper - ignore and warn about illegal addEntity calls instead of crashing server; moved down below valid=true
              if (entity instanceof ServerPlayer serverPlayer) {
                  ServerLevel.this.players.add(serverPlayer);
-@@ -2799,12 +2883,12 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -2799,12 +2879,12 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
                      );
                  }
  
@@ -11962,7 +11983,7 @@ index dc65503a2d785d64d37b76b0303f51cf66d9769a..0ed0935cf963ecd34ea720d12939204f
                  }
              }
  
-@@ -2827,18 +2911,27 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -2827,6 +2907,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
          @Override
          public void onTrackingEnd(Entity entity) {
              org.spigotmc.AsyncCatcher.catchOp("entity unregister"); // Spigot
@@ -11970,15 +11991,7 @@ index dc65503a2d785d64d37b76b0303f51cf66d9769a..0ed0935cf963ecd34ea720d12939204f
              // Spigot start // TODO I don't think this is needed anymore
              if (entity instanceof Player player) {
                  for (final ServerLevel level : ServerLevel.this.getServer().getAllLevels()) {
--                    for (final Optional<net.minecraft.world.level.saveddata.SavedData> savedData : level.getDataStorage().cache.values()) {
-+                    // Folia start - make map data thread-safe
-+                    List<Optional<net.minecraft.world.level.saveddata.SavedData>> worldDataCache;
-+                    synchronized (level.getDataStorage().cache) {
-+                        worldDataCache = new java.util.ArrayList<>(level.getDataStorage().cache.values());
-+                    }
-+                    for (final Optional<net.minecraft.world.level.saveddata.SavedData> savedData : worldDataCache) {
-+                        // Folia end - make map data thread-safe
-                         if (savedData.isEmpty() || !(savedData.get() instanceof MapItemSavedData map)) {
+@@ -2835,10 +2916,12 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
                              continue;
                          }
  
@@ -11991,7 +12004,7 @@ index dc65503a2d785d64d37b76b0303f51cf66d9769a..0ed0935cf963ecd34ea720d12939204f
                      }
                  }
              }
-@@ -2870,12 +2963,12 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -2870,12 +2953,12 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
                      );
                  }
  
@@ -12006,7 +12019,7 @@ index dc65503a2d785d64d37b76b0303f51cf66d9769a..0ed0935cf963ecd34ea720d12939204f
                  }
              }
  
-@@ -2883,6 +2976,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -2883,6 +2966,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
              ServerLevel.this.debugSynchronizers.dropEntity(entity);
              // CraftBukkit start
              entity.valid = false;
@@ -12014,7 +12027,7 @@ index dc65503a2d785d64d37b76b0303f51cf66d9769a..0ed0935cf963ecd34ea720d12939204f
              if (!(entity instanceof ServerPlayer)) {
                  for (ServerPlayer player : ServerLevel.this.server.getPlayerList().players) { // Paper - call onEntityRemove for all online players
                      player.getBukkitEntity().onEntityRemove(entity);
-@@ -2910,11 +3004,11 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -2910,11 +2994,11 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
      private long lagCompensationTick = MinecraftServer.SERVER_INIT;
  
      public long getLagCompensationTick() {
@@ -19558,49 +19571,119 @@ index 1af585f9554278983148096c73c86e18166f5471..99be63df22932b8f2bc2c7a5e48e88be
      }
  
 diff --git a/net/minecraft/world/level/storage/DimensionDataStorage.java b/net/minecraft/world/level/storage/DimensionDataStorage.java
-index b932e6236975fd4a755bdbf4b7a958599383f3f8..a1449d9b7a45c0119bbd268db3e82035cefbb166 100644
+index b932e6236975fd4a755bdbf4b7a958599383f3f8..c7684ff85c4a4e5990b05895c8be03da395e7487 100644
 --- a/net/minecraft/world/level/storage/DimensionDataStorage.java
 +++ b/net/minecraft/world/level/storage/DimensionDataStorage.java
-@@ -55,6 +55,7 @@ public class DimensionDataStorage implements AutoCloseable {
+@@ -38,7 +38,7 @@ import org.slf4j.Logger;
+ 
+ public class DimensionDataStorage implements AutoCloseable {
+     private static final Logger LOGGER = LogUtils.getLogger();
+-    public final Map<SavedDataType<?>, Optional<SavedData>> cache = new HashMap<>();
++    public final Map<SavedDataType<?>, Optional<SavedData>> cache = new java.util.concurrent.ConcurrentHashMap<>(); // Folia - region threading
+     private final DataFixer fixerUpper;
+     private final HolderLookup.Provider registries;
+     private final Path dataFolder;
+@@ -54,25 +54,63 @@ public class DimensionDataStorage implements AutoCloseable {
+         return this.dataFolder.resolve(filename + ".dat");
      }
  
++    // Folia start - region threading
++    public <T extends SavedData> @Nullable T read(SavedDataType<T> type, java.util.function.@Nullable Consumer<@Nullable T> onRead) {
++        // try lockless read first
++        Optional<SavedData> immediate = this.cache.get(type);
++        if (immediate != null) {
++            return (T)immediate.orElse(null);
++        } // else: fall back to slow path
++
++        return (T)this.cache.computeIfAbsent(type, (SavedDataType<?> key) -> {
++            SavedData onDisk = DimensionDataStorage.this.readSavedData(key);
++            if (onRead != null) {
++                onRead.accept((T)onDisk);
++            }
++            return Optional.ofNullable(onDisk);
++        }).orElse(null);
++    }
++    // Folia end - region threading
++
      public <T extends SavedData> T computeIfAbsent(SavedDataType<T> type) {
-+        synchronized (this.cache) { // Folia - make map data thread-safe
-         T savedData = this.get(type);
-         if (savedData != null) {
-             return savedData;
-@@ -63,9 +64,11 @@ public class DimensionDataStorage implements AutoCloseable {
-             this.set(type, savedData1);
-             return savedData1;
-         }
-+        } // Folia - make map data thread-safe
+-        T savedData = this.get(type);
+-        if (savedData != null) {
+-            return savedData;
+-        } else {
+-            T savedData1 = (T)type.constructor().get();
+-            this.set(type, savedData1);
+-            return savedData1;
+-        }
++        // Folia start - region threading
++        // try lockless read first
++        Optional<SavedData> immediate = this.cache.get(type);
++        if (immediate != null && immediate.isPresent()) {
++            return (T)immediate.orElse(null);
++        } // else: fall back to slow path
++
++        return (T)this.cache.compute(type, (SavedDataType<?> key, Optional<SavedData> valueInMap) -> {
++            if (valueInMap != null && valueInMap.isPresent()) {
++                return valueInMap;
++            }
++            if (valueInMap == null) {
++                SavedData onDisk = DimensionDataStorage.this.readSavedData(key);
++                if (onDisk != null) {
++                    return Optional.of(onDisk);
++                }
++            }
++
++            SavedData newData = key.constructor().get();
++            newData.setDirty();
++
++            return Optional.of(newData);
++        }).orElse(null);
++        // Folia end - region threading
      }
  
      public <T extends SavedData> @Nullable T get(SavedDataType<T> type) {
-+        synchronized (this.cache) { // Folia - make map data thread-safe
-         Optional<SavedData> optional = this.cache.get(type);
-         if (optional == null) {
-             optional = Optional.ofNullable(this.readSavedData(type));
-@@ -73,6 +76,7 @@ public class DimensionDataStorage implements AutoCloseable {
-         }
+-        Optional<SavedData> optional = this.cache.get(type);
+-        if (optional == null) {
+-            optional = Optional.ofNullable(this.readSavedData(type));
+-            this.cache.put(type, optional);
+-        }
++        // Folia start - region threading
++        // try lockless read first
++        Optional<SavedData> immediate = this.cache.get(type);
++        if (immediate != null) {
++            return (T)immediate.orElse(null);
++        } // else: fall back to slow path
  
-         return (T)optional.orElse(null);
-+        } // Folia - make map data thread-safe
+-        return (T)optional.orElse(null);
++        return (T)this.cache.computeIfAbsent(type, (SavedDataType<?> key) -> {
++            return Optional.ofNullable(DimensionDataStorage.this.readSavedData(key));
++        }).orElse(null);
++        // Folia end - region threading
      }
  
      private <T extends SavedData> @Nullable T readSavedData(SavedDataType<T> type) {
-@@ -94,8 +98,10 @@ public class DimensionDataStorage implements AutoCloseable {
+@@ -94,8 +132,9 @@ public class DimensionDataStorage implements AutoCloseable {
      }
  
      public <T extends SavedData> void set(SavedDataType<T> type, T value) {
-+        synchronized (this.cache) { // Folia - make map data thread-safe
++        value.setDirty(); // Folia - region threading - moved up
          this.cache.put(type, Optional.of(value));
-         value.setDirty();
-+        } // Folia - make map data thread-safe
+-        value.setDirty();
++        // Folia - region threading - move up
      }
  
      public CompoundTag readTagFromDisk(String filename, DataFixTypes dataFixType, int version) throws IOException {
-@@ -189,7 +195,9 @@ public class DimensionDataStorage implements AutoCloseable {
+@@ -180,8 +219,9 @@ public class DimensionDataStorage implements AutoCloseable {
+         Map<SavedDataType<?>, CompoundTag> map = new Object2ObjectArrayMap<>();
+         RegistryOps<Tag> registryOps = this.registries.createSerializationContext(NbtOps.INSTANCE);
+         this.cache.forEach((savedDataType, optional) -> optional.filter(SavedData::isDirty).ifPresent(savedData -> {
++            savedData.setDirty(false); // Folia - region threading - moved up
+             map.put(savedDataType, this.encodeUnchecked(savedDataType, savedData, registryOps));
+-            savedData.setDirty(false);
++            // Folia - region threading - move up
+         }));
+         return map;
+     }
+@@ -189,7 +229,9 @@ public class DimensionDataStorage implements AutoCloseable {
      private <T extends SavedData> CompoundTag encodeUnchecked(SavedDataType<T> type, SavedData data, RegistryOps<Tag> ops) {
          Codec<T> codec = type.codec();
          CompoundTag compoundTag = new CompoundTag();

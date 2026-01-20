@@ -3814,6 +3814,171 @@ index cd83ca2ace1dab6c1f10e2306a0ca0bb8ae083cc..8e7953c4e5d535eed384249110dbf2fd
          if (event.callEvent()) {
              boolean result = snapshot.place(flags);
              return !checkSetResult || result;
+diff --git a/src/main/java/org/bukkit/craftbukkit/map/CraftMapView.java b/src/main/java/org/bukkit/craftbukkit/map/CraftMapView.java
+index e576bca9ceec9a79c5234faeb7a294d9841bcd41..c8e0efb1f01feb32d4eba4338ca34aa4668df336 100644
+--- a/src/main/java/org/bukkit/craftbukkit/map/CraftMapView.java
++++ b/src/main/java/org/bukkit/craftbukkit/map/CraftMapView.java
+@@ -37,21 +37,28 @@ public final class CraftMapView implements MapView {
+ 
+     @Override
+     public boolean isVirtual() {
++        synchronized (this.worldMap) { // Folia - region threading
+         return !this.renderers.isEmpty() && !(this.renderers.get(0) instanceof CraftMapRenderer);
++        } // Folia - region threading
+     }
+ 
+     @Override
+     public Scale getScale() {
++        synchronized (this.worldMap) { // Folia - region threading
+         return Scale.valueOf(this.worldMap.scale);
++        } // Folia - region threading
+     }
+ 
+     @Override
+     public void setScale(Scale scale) {
++        synchronized (this.worldMap) { // Folia - region threading
+         this.worldMap.scale = scale.getValue();
++        } // Folia - region threading
+     }
+ 
+     @Override
+     public World getWorld() {
++        synchronized (this.worldMap) { // Folia - region threading
+         ResourceKey<net.minecraft.world.level.Level> dimension = this.worldMap.dimension;
+         ServerLevel world = MinecraftServer.getServer().getLevel(dimension);
+ 
+@@ -63,50 +70,66 @@ public final class CraftMapView implements MapView {
+             return Bukkit.getServer().getWorld(this.worldMap.uniqueId);
+         }
+         return null;
++        } // Folia - region threading
+     }
+ 
+     @Override
+     public void setWorld(World world) {
++        synchronized (this.worldMap) { // Folia - region threading
+         this.worldMap.dimension = ((CraftWorld) world).getHandle().dimension();
+         this.worldMap.uniqueId = world.getUID();
++        } // Folia - region threading
+     }
+ 
+     @Override
+     public int getCenterX() {
++        synchronized (this.worldMap) { // Folia - region threading
+         return this.worldMap.centerX;
++        } // Folia - region threading
+     }
+ 
+     @Override
+     public int getCenterZ() {
++        synchronized (this.worldMap) { // Folia - region threading
+         return this.worldMap.centerZ;
++        } // Folia - region threading
+     }
+ 
+     @Override
+     public void setCenterX(int x) {
++        synchronized (this.worldMap) { // Folia - region threading
+         this.worldMap.centerX = x;
++        } // Folia - region threading
+     }
+ 
+     @Override
+     public void setCenterZ(int z) {
++        synchronized (this.worldMap) { // Folia - region threading
+         this.worldMap.centerZ = z;
++        } // Folia - region threading
+     }
+ 
+     @Override
+     public List<MapRenderer> getRenderers() {
++        synchronized (this.worldMap) { // Folia - region threading
+         return new ArrayList<MapRenderer>(this.renderers);
++        } // Folia - region threading
+     }
+ 
+     @Override
+     public void addRenderer(MapRenderer renderer) {
++        synchronized (this.worldMap) { // Folia - region threading
+         if (!this.renderers.contains(renderer)) {
+             this.renderers.add(renderer);
+             this.canvases.put(renderer, new WeakHashMap<>());
+             renderer.initialize(this);
+         }
++        } // Folia - region threading
+     }
+ 
+     @Override
+     public boolean removeRenderer(MapRenderer renderer) {
++        synchronized (this.worldMap) { // Folia - region threading
+         if (this.renderers.contains(renderer)) {
+             this.renderers.remove(renderer);
+             for (Map.Entry<CraftPlayer, CraftMapCanvas> entry : this.canvases.get(renderer).entrySet()) {
+@@ -121,6 +144,7 @@ public final class CraftMapView implements MapView {
+         } else {
+             return false;
+         }
++        } // Folia - region threading
+     }
+ 
+     private boolean isContextual() {
+@@ -131,6 +155,7 @@ public final class CraftMapView implements MapView {
+     }
+ 
+     public RenderData render(CraftPlayer player) {
++        synchronized (this.worldMap) { // Folia - region threading
+         boolean context = this.isContextual();
+         RenderData render = this.renderCache.get(context ? player : null);
+ 
+@@ -173,35 +198,48 @@ public final class CraftMapView implements MapView {
+         }
+ 
+         return render;
++        } // Folia - region threading
+     }
+ 
+     @Override
+     public boolean isTrackingPosition() {
++        synchronized (this.worldMap) { // Folia - region threading
+         return this.worldMap.trackingPosition;
++        } // Folia - region threading
+     }
+ 
+     @Override
+     public void setTrackingPosition(boolean trackingPosition) {
++        synchronized (this.worldMap) { // Folia - region threading
+         this.worldMap.trackingPosition = trackingPosition;
++        } // Folia - region threading
+     }
+ 
+     @Override
+     public boolean isUnlimitedTracking() {
++        synchronized (this.worldMap) { // Folia - region threading
+         return this.worldMap.unlimitedTracking;
++        } // Folia - region threading
+     }
+ 
+     @Override
+     public void setUnlimitedTracking(boolean unlimited) {
++        synchronized (this.worldMap) { // Folia - region threading
+         this.worldMap.unlimitedTracking = unlimited;
++        } // Folia - region threading
+     }
+ 
+     @Override
+     public boolean isLocked() {
++        synchronized (this.worldMap) { // Folia - region threading
+         return this.worldMap.locked;
++        } // Folia - region threading
+     }
+ 
+     @Override
+     public void setLocked(boolean locked) {
++        synchronized (this.worldMap) { // Folia - region threading
+         this.worldMap.locked = locked;
++        } // Folia - region threading
+     }
+ }
 diff --git a/src/main/java/org/bukkit/craftbukkit/scheduler/CraftScheduler.java b/src/main/java/org/bukkit/craftbukkit/scheduler/CraftScheduler.java
 index 7ffb7a210bf840009158d5e4364dad78221ded6c..c4dcddc4db02ed3641d05fae31ead7c13205f841 100644
 --- a/src/main/java/org/bukkit/craftbukkit/scheduler/CraftScheduler.java

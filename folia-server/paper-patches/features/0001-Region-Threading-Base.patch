@@ -672,10 +672,10 @@ index afe793c35f05a80058e80bcaee76ac45a40b04a2..9ddbb2d72e11c6abbbdb866f3010f276
  
  
 diff --git a/src/main/java/io/papermc/paper/plugin/manager/PaperPluginInstanceManager.java b/src/main/java/io/papermc/paper/plugin/manager/PaperPluginInstanceManager.java
-index 2db7efe1f915a87d73021dfb0b6914ede0ef9810..acdc4f0f91e15fc687467f84992930bdc88de6f3 100644
+index 4dd7c6c0d7f54f5cc5879b9c60c60c455f00c9f8..578102113c2034ed220a4753ee5b69e0270321ce 100644
 --- a/src/main/java/io/papermc/paper/plugin/manager/PaperPluginInstanceManager.java
 +++ b/src/main/java/io/papermc/paper/plugin/manager/PaperPluginInstanceManager.java
-@@ -256,12 +256,7 @@ class PaperPluginInstanceManager {
+@@ -265,12 +265,7 @@ class PaperPluginInstanceManager {
                  + pluginName + " (Is it up to date?)", ex, plugin); // Paper
          }
  

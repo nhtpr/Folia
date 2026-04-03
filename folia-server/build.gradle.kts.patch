@@ -1,10 +1,12 @@
 --- a/paper-server/build.gradle.kts
 +++ b/paper-server/build.gradle.kts
-@@ -21,6 +_,18 @@
+@@ -20,8 +_,21 @@
+ 
  paperweight {
      minecraftVersion = providers.gradleProperty("mcVersion")
++    filterPatches = false
      gitFilePatches = false
-+    
+ 
 +    val fork = forks.register("folia") {
 +        upstream.patchDir("paperServer") {
 +            upstreamPath = "paper-server"
@@ -16,9 +18,10 @@
 +
 +    activeFork = fork
 +
- 
++
      spigot {
          enabled = true
+         buildDataRef = "17f77cee7117ab9d6175f088ae8962bfd04e61a9"
 @@ -104,7 +_,19 @@
      }
  }

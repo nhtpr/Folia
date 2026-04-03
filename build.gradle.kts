@@ -8,6 +8,7 @@ plugins {
 }
 
 paperweight {
+    filterPatches = false
     upstreams.paper {
         ref = providers.gradleProperty("paperRef")
 
@@ -81,12 +82,6 @@ subprojects {
                 credentials(PasswordCredentials::class)
             }
         }
-    }
-}
-
-allprojects {
-    tasks.withType<RebuildGitPatches>().configureEach {
-        filterPatches = false
     }
 }
 

@@ -5,7 +5,7 @@ Subject: [PATCH] Add TPS From Region
 
 
 diff --git a/src/main/java/org/bukkit/Bukkit.java b/src/main/java/org/bukkit/Bukkit.java
-index 14d81c7b138ebf999d5812d26fbf869209c100f3..b9d34c0b80a5d0c26f43e4959c3a8256a854585a 100644
+index 77473d9de8283a557ca061b0429dee9312de7d6b..bfebdc317c71d16db742416db590505c66529673 100644
 --- a/src/main/java/org/bukkit/Bukkit.java
 +++ b/src/main/java/org/bukkit/Bukkit.java
 @@ -2987,6 +2987,42 @@ public final class Bukkit {
@@ -52,10 +52,10 @@ index 14d81c7b138ebf999d5812d26fbf869209c100f3..b9d34c0b80a5d0c26f43e4959c3a8256
      /**
       * @deprecated All methods on this class have been deprecated, see the individual methods for replacements.
 diff --git a/src/main/java/org/bukkit/Server.java b/src/main/java/org/bukkit/Server.java
-index 0ec885b97d655c03371840d739b47063494ed36f..1dc5d8c96786950fc98cada5bad981c0c716b154 100644
+index dd8ad5976eb413f049245a4f37bd94b3e41829de..23901bb9e01a90dc5f12e458b7188d51e91022b4 100644
 --- a/src/main/java/org/bukkit/Server.java
 +++ b/src/main/java/org/bukkit/Server.java
-@@ -2761,4 +2761,34 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi
+@@ -2780,4 +2780,34 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi
       */
      void allowPausing(@NotNull org.bukkit.plugin.Plugin plugin, boolean value);
      // Paper end - API to check if the server is sleeping

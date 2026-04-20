@@ -4,7 +4,7 @@ import io.papermc.paperweight.tasks.RebuildGitPatches
 
 plugins {
     java // TODO java launcher tasks
-    id("io.papermc.paperweight.patcher") version "2.0.0-beta.19"
+    id("io.papermc.paperweight.patcher") version "2.0.0-beta.21"
 }
 
 paperweight {
@@ -39,7 +39,7 @@ subprojects {
 
     extensions.configure<JavaPluginExtension> {
         toolchain {
-            languageVersion = JavaLanguageVersion.of(21)
+            languageVersion = JavaLanguageVersion.of(25)
         }
     }
 
@@ -58,7 +58,7 @@ subprojects {
     }
     tasks.withType<JavaCompile>().configureEach  {
         options.encoding = Charsets.UTF_8.name()
-        options.release = 21
+        options.release = 25
         options.isFork = true
     }
     tasks.withType<Javadoc>().configureEach  {

@@ -7,26 +7,26 @@ This allows the player to be re-positioned before logging into
 the world without causing thread checks to trip on Folia.
 
 diff --git a/net/minecraft/server/level/ServerPlayer.java b/net/minecraft/server/level/ServerPlayer.java
-index 22f749776160015518efab557d94e93159b8ccda..01e067a0045e59094bf271c448f158f932199aa3 100644
+index 45921b0c22dc35facd608b1c7644e5b9a03a97ec..5d4310dab55cc960ccfce279e656e7b740f3d5c0 100644
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
-@@ -718,8 +718,18 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
-         Optional<ValueInput> optional = input.child("RootVehicle");
-         if (!optional.isEmpty()) {
+@@ -739,8 +739,18 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+         Optional<ValueInput> rootTag = playerInput.child("RootVehicle");
+         if (!rootTag.isEmpty()) {
              ServerLevel serverLevel = this.level();
 +            Vec3 playerPos = this.position(); // Paper - force sync root vehicle to player position
-             Entity entity = EntityType.loadEntityRecursive(
--                optional.get().childOrEmpty("Entity"), serverLevel, EntitySpawnReason.LOAD, entity2 -> !serverLevel.addWithUUID(entity2, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.MOUNT) ? null : entity2 // Paper - Entity#getEntitySpawnReason
+             Entity vehicle = EntityType.loadEntityRecursive(
+-                rootTag.get().childOrEmpty("Entity"), serverLevel, EntitySpawnReason.LOAD, e -> !serverLevel.addWithUUID(e, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.MOUNT) ? null : e // Paper - Entity#getEntitySpawnReason
 +                    // Paper start - force sync root vehicle to player position
-+                    optional.get().childOrEmpty("Entity"), serverLevel, EntitySpawnReason.LOAD, (Entity entity2) -> {
++                    rootTag.get().childOrEmpty("Entity"), serverLevel, EntitySpawnReason.LOAD, e -> {
 +                        // Paper start - force sync root vehicle to player position
-+                        if (entity2.distanceToSqr(ServerPlayer.this) > (5.0 * 5.0)) {
-+                            entity2.setPosRaw(playerPos.x, playerPos.y, playerPos.z, true);
++                        if (e.distanceToSqr(playerPos) > (5.0 * 5.0)) {
++                            e.setPosRaw(playerPos.x, playerPos.y, playerPos.z, true);
 +                        }
 +                        // Paper end - force sync root vehicle to player position
-+                        return !serverLevel.addWithUUID(entity2, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.MOUNT) ? null : entity2; // Paper - Entity#getEntitySpawnReason
++                        return !serverLevel.addWithUUID(e, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.MOUNT) ? null : e; // Paper - Entity#getEntitySpawnReason
 +                    }
 +                    // Paper end - force sync root vehicle to player position
              );
-             if (entity != null) {
-                 UUID uuid = optional.get().read("Attach", UUIDUtil.CODEC).orElse(null);
+             if (vehicle != null) {
+                 UUID attachTo = rootTag.get().read("Attach", UUIDUtil.CODEC).orElse(null);

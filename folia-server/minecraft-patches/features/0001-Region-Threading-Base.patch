@@ -14357,6 +14357,19 @@ index 08b59be32ff3fee1afd45f727e601fec3b4bfb0b..c25b71397b57d4077f86b37cfa42e9b2
          }
  
          @Override
+diff --git a/net/minecraft/world/clock/ServerClockManager.java b/net/minecraft/world/clock/ServerClockManager.java
+index c1defe73d20080fa00a68e0267ff0e3dfb3c245a..3b37b8fedba1fcbfe7d9c59fc859b9ea63d9b8c0 100644
+--- a/net/minecraft/world/clock/ServerClockManager.java
++++ b/net/minecraft/world/clock/ServerClockManager.java
+@@ -156,7 +156,7 @@ public class ServerClockManager extends SavedData implements ClockManager {
+     }
+ 
+     private long getGameTime() {
+-        return this.server.overworld().getGameTime();
++        return this.server.overworld().levelData.getGameTime(); // Folia - region threading
+     }
+ 
+     public boolean isAtTimeMarker(final Holder<WorldClock> clock, final ResourceKey<ClockTimeMarker> timeMarkerId) {
 diff --git a/net/minecraft/world/damagesource/CombatTracker.java b/net/minecraft/world/damagesource/CombatTracker.java
 index 31613a27b7daf8921a7a627c725e4cd521e16760..417d9d8264e73a9dd1b26512f714b277fadc735f 100644
 --- a/net/minecraft/world/damagesource/CombatTracker.java

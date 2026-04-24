@@ -5,10 +5,10 @@ Subject: [PATCH] Add TPS From Region
 
 
 diff --git a/src/main/java/org/bukkit/Bukkit.java b/src/main/java/org/bukkit/Bukkit.java
-index 77473d9de8283a557ca061b0429dee9312de7d6b..bfebdc317c71d16db742416db590505c66529673 100644
+index 5ab8f0d77bbfb87ed115e4cd1b22576f552195b9..809672762d38b73d6e955ca8c2b411b7309238fa 100644
 --- a/src/main/java/org/bukkit/Bukkit.java
 +++ b/src/main/java/org/bukkit/Bukkit.java
-@@ -2987,6 +2987,42 @@ public final class Bukkit {
+@@ -2990,6 +2990,42 @@ public final class Bukkit {
          return server.isGlobalTickThread();
      }
      // Paper end - Folia region threading API

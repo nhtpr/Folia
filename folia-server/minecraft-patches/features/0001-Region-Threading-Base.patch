@@ -13163,7 +13163,7 @@ index 0b57e3bcd0319e4e9571fddbcb85db5a3105b8b2..6c74984f290d6ca79917f82a0844b413
              }
              // Spigot end
 diff --git a/net/minecraft/server/network/ServerGamePacketListenerImpl.java b/net/minecraft/server/network/ServerGamePacketListenerImpl.java
-index fe6e148322e920989ac3ffc3c10de95d782265f9..a67a9ac716c1517640275dcb1ccd19084a7740f5 100644
+index fe6e148322e920989ac3ffc3c10de95d782265f9..ecab81c533e1044c4da327946549339486899ad1 100644
 --- a/net/minecraft/server/network/ServerGamePacketListenerImpl.java
 +++ b/net/minecraft/server/network/ServerGamePacketListenerImpl.java
 @@ -301,10 +301,10 @@ public class ServerGamePacketListenerImpl
@@ -13478,6 +13478,15 @@ index fe6e148322e920989ac3ffc3c10de95d782265f9..a67a9ac716c1517640275dcb1ccd1908
                  AABB targetBounds = target.getBoundingBox();
                  ItemStack mainHandItem = this.player.getMainHandItem();
                  if (this.player.isWithinAttackRange(mainHandItem, targetBounds, io.papermc.paper.configuration.GlobalConfiguration.get().misc.clientInteractionLeniencyDistance.or(3.0))) { // Paper - configurable lenience
+@@ -2907,7 +2969,7 @@ public class ServerGamePacketListenerImpl
+             // Spigot end
+             this.player.resetLastActionTime();
+             this.player.setShiftKeyDown(packet.usingSecondaryAction());
+-            if (target != null && level.getWorldBorder().isWithinBounds(target.blockPosition())) {
++            if (target != null && ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(target) && level.getWorldBorder().isWithinBounds(target.blockPosition())) { // Folia - region threading
+                 AABB targetBounds = target.getBoundingBox();
+                 if (this.player.isWithinEntityInteractionRange(targetBounds, io.papermc.paper.configuration.GlobalConfiguration.get().misc.clientInteractionLeniencyDistance.or(3.0))) { // Paper - configurable lenience value for interact range
+                     InteractionHand hand = packet.hand();
 @@ -3009,6 +3071,12 @@ public class ServerGamePacketListenerImpl
          switch (action) {
              case PERFORM_RESPAWN:

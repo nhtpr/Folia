@@ -14,3 +14,15 @@ rootProject.name = "folia"
 
 include("folia-api")
 include("folia-server")
+
+gradle.lifecycle.beforeProject {
+    val mcVersion = providers.gradleProperty("mcVersion").get().trim()
+    val foliaVersionChannel = providers.gradleProperty("channel").get().trim()
+    val foliaBuildNumber = providers.environmentVariable("BUILD_NUMBER").orNull?.trim()?.toInt()
+    val versionString = if (foliaBuildNumber == null) {
+        "$mcVersion.local-SNAPSHOT"
+    } else {
+        "$mcVersion.build.$foliaBuildNumber-${foliaVersionChannel.lowercase()}"
+    }
+    version = versionString
+}

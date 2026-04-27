@@ -9,10 +9,10 @@ add explicit block update suppression techniques, it's better
 than the server crashing.
 
 diff --git a/net/minecraft/world/level/Level.java b/net/minecraft/world/level/Level.java
-index 4756f407bd35a7cb48e12c39b8e23b247c296421..e4f20b028eba9a9fedf3c01631f02ec1ba7241fe 100644
+index ff2622f007cf61028447523bbec0ec6076609923..d90edfdd7a7c0c1b31254fe1de19a91a66513d11 100644
 --- a/net/minecraft/world/level/Level.java
 +++ b/net/minecraft/world/level/Level.java
-@@ -2109,7 +2109,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
+@@ -2110,7 +2110,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
      public void updateNeighbourForOutputSignal(final BlockPos pos, final Block changedBlock) {
          for (Direction direction : Direction.Plane.HORIZONTAL) {
              BlockPos relativePos = pos.relative(direction);
